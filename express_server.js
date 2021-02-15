@@ -15,6 +15,14 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+//add new route handler. Use res.render to pass the url data to our template (urls_index)
+//express knows to look inside a views directory for template file with extension .ejs, thus we don't need to tell the app where to find the files
+app.get("/urls", (req, res) => {
+  //when we send even one variable, we need to send it inside an object
+  const urlsObject = { urls: urlDatabase };
+  res.render("urls_index", urlsObject)
+})
+
 //create page containing database info, in a string JSON format
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
