@@ -1,9 +1,18 @@
 const express = require('express');
 const app = express();
 const PORT = 8080;
+const bodyParser = require('body-parser');
+
+app.use(bodyParser.urlencoded({extended: true}));
 
 //tells express app to use EJS ar its templating engine
 app.set("view engine", "ejs");
+
+//define a route that will match a post request
+app.post("/urls", (req, res) =>{
+  console.log(req.body); //logs to server console
+  res.send("Ok"); //respond with ok (will be changed later)
+});
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
