@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 
 function generateRandomString() {
   const str = Math.random().toString(36).substring(7);
-  // console.log("random", r);
   return str;
 }
 // console.log(generateRandomString());
@@ -34,40 +33,38 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-//add new route handler. Use res.render to pass the url data to our template (urls_index)
-//express knows to look inside a views directory for template file with extension .ejs, thus we don't need to tell the app where to find the files
+//res.render to pass the url data to our template (urls_index)
 app.get("/urls", (req, res) => {
   //when we send even one variable, we need to send it inside an object
-  const urlsObject = { urls: urlDatabase };
-  res.render("urls_index", urlsObject);
+  const templateVars = { urls: urlDatabase };
+  //express knows to look inside a views directory for template file with extension .ejs, thus we don't need to add a path to file
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+//pushes form submission data & newly created short url into our database object, then redirects user to shortURL page
 app.post("/urls", (req, res) =>{
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
+  //creates new key/value pair
   urlDatabase[shortURL] = longURL;
-  // responds with a redirection to /urls/:shortURL, where shortURL is the random string we generated
-  // app.get("/urls/:shortURL", callback); //callback is not defined
-  res.redirect(`/urls/${shortURL}`) // Failed to lookup view "/urls/:shortURL" in views directory
+  res.redirect(`/urls/${shortURL}`)
 });
 
+//creates a path to a page holding all of our short & long URLs
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] }
   res.render("urls_show", templateVars);
 })
 
+//redirects users to longURL
 app.get("/u/:shortURL", (req, res) => {
-  //first find your longURL
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
-
-//define a route that will match a post request
-// We need to save the longURL and shortURL to our urlDatabase in format {shortUrl:longURL} 
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
