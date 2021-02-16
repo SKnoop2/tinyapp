@@ -76,7 +76,15 @@ app.post("/urls/:shortURL/delete", (req, res) =>{
 });
 
 //#UPDATE URLS
-
+app.post("/urls/:shortURL", (req, res) =>{
+  //shortURL stays the same, so we obtain it from the params key in object
+  const shortURL = req.params.shortURL;
+  //longURL is a new one, so we obtain it from the body key in our object
+  const longURL = req.body.longURL;
+  //creates new key/value pair
+  urlDatabase[shortURL] = longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
