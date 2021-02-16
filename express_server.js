@@ -45,15 +45,6 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-//pushes form submission data & newly created short url into our database object, then redirects user to shortURL page
-app.post("/urls", (req, res) =>{
-  const shortURL = generateRandomString();
-  const longURL = req.body.longURL;
-  //creates new key/value pair
-  urlDatabase[shortURL] = longURL;
-  res.redirect(`/urls/${shortURL}`)
-});
-
 //creates a path to a page holding all of our short & long URLs
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] }
@@ -65,6 +56,27 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
+
+//#SUBMIT URLS
+//pushes form submission data & newly created short url into our database object, then redirects user to shortURL page
+app.post("/urls", (req, res) =>{
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  //creates new key/value pair
+  urlDatabase[shortURL] = longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
+//#DELETE URLS
+//handle a delete request via POST method
+app.post("/urls/:shortURL/delete", (req, res) =>{
+  //js delete operator removes property (longURL) from object
+  delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+});
+
+//#UPDATE URLS
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
