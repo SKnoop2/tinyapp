@@ -74,7 +74,7 @@ app.get("/register", (req, res) => {
 
 // #SUBMIT URLS
 //pushes form submission data & newly created short url into our database object, then redirects user to shortURL page
-app.post("/urls", (req, res) =>{
+app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
   //creates new key/value pair
@@ -84,14 +84,14 @@ app.post("/urls", (req, res) =>{
 
 // #DELETE URLS
 //handle a delete request via POST method
-app.post("/urls/:shortURL/delete", (req, res) =>{
+app.post("/urls/:shortURL/delete", (req, res) => {
   //js delete operator removes property (longURL) from object
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
 
 // #UPDATE URLS
-app.post("/urls/:shortURL", (req, res) =>{
+app.post("/urls/:shortURL", (req, res) => {
   //shortURL stays the same, so we obtain it from the params key in object
   const shortURL = req.params.shortURL;
   //longURL is a new one, so we obtain it from the body key in our object
@@ -102,19 +102,33 @@ app.post("/urls/:shortURL", (req, res) =>{
 });
 
 // #USERNAME ENTRY
-app.post("/login", (req, res) =>{
+app.post("/login", (req, res) => {
   const username = req.body.username;
   res.cookie("username", username);
   res.redirect("/urls");  
 });
 
 // #LOGOUT
-app.post("/logout", (req, res) =>{
+app.post("/logout", (req, res) => {
   // don't need second variable in res.clearCookie because we don't need username to show on page
   res.clearCookie("username");
   res.redirect("/urls");  
 });
 
+// #REGISTER ENTRY FORM
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  users[id] = {
+    id,
+    email,
+    password
+  }
+  res.cookie("user_id", id);
+  console.log(users[id]);
+  res.redirect("/urls")
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
