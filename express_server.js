@@ -20,29 +20,10 @@ const urlDatabase = {
   "9sn5xK": "http://www.google.com"
 };
 
-// #
-
-//this will show the word "hello" when going to page "/" (home)
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
-
-// //create page containing database info, in a string JSON format
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-
-// //creates a page at the path hello, adds some text with one word bold
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
-
 //res.render to pass the url data to our template (urls_index)
 app.get("/urls", (req, res) => {
   //when we send even one variable, we need to send it inside an object
   const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
-  console.log("templateVars: ", templateVars);
-  console.log("req.cookies: ", req.cookies)
   //express knows to look inside a views directory for template file with extension .ejs, thus we don't need to add a path to file
   res.render("urls_index", templateVars);
 });
@@ -68,6 +49,14 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
   res.render("urls_show", templateVars);
+});
+
+// #REGISTER (LOGIN)
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: null,
+  };
+  res.render("register", templateVars);
 });
 
 // #SUBMIT URLS
@@ -102,22 +91,18 @@ app.post("/urls/:shortURL", (req, res) =>{
 // #USERNAME ENTRY
 app.post("/login", (req, res) =>{
   const username = req.body.username;
-  // console.log(username);
   res.cookie("username", username);
-  // console.log("set cookie: ", res.cookie())
   res.redirect("/urls");  
 });
 
 // #LOGOUT
 app.post("/logout", (req, res) =>{
-  // const username = req.body.username;
-  // console.log(username);
+  // don't need second variable in res.clearCookie because we don't need username to show on page
   res.clearCookie("username");
-  // console.log("set cookie: ", res.cookie())
   res.redirect("/urls");  
 });
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
 });
-
