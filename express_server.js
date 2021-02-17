@@ -35,39 +35,47 @@ const users = {
 
 //res.render to pass the url data to our template (urls_index)
 app.get("/urls", (req, res) => {
-  //when we send even one variable, we need to send it inside an object
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const userID = req.cookies["user_id"];
+  const templateVars = { 
+    user: users[userID],
+    urls: urlDatabase
+  };
   //express knows to look inside a views directory for template file with extension .ejs, thus we don't need to add a path to file
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"],
+  const userID = req.cookies["user_id"];
+  const templateVars = { 
+    user: users[userID]
   };
   res.render("urls_new", templateVars);
 });
 
 //creates a path to a page holding all of our short & long URLs
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username: req.cookies["username"] }
+  const userID = req.cookies["user_id"];
+  const templateVars = { 
+    user: users[userID]
+  }
   res.render("urls_show", templateVars);
 })
 
 //redirects users to longURL
 app.get("/u/:shortURL", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"],
-  };
   const longURL = urlDatabase[req.params.shortURL];
+  const templateVars = {
+    user: req.cookies["username"],
+  };
   res.redirect(longURL);
   res.render("urls_show", templateVars);
 });
 
 // #REGISTER (LOGIN)
 app.get("/register", (req, res) => {
+  const userID = req.cookies["user_id"];
   const templateVars = {
-    username: null,
+    user: users[userID]
   };
   res.render("register", templateVars);
 });
@@ -111,7 +119,7 @@ app.post("/login", (req, res) => {
 // #LOGOUT
 app.post("/logout", (req, res) => {
   // don't need second variable in res.clearCookie because we don't need username to show on page
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");  
 });
 
