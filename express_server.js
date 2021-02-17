@@ -20,6 +20,19 @@ const urlDatabase = {
   "9sn5xK": "http://www.google.com"
 };
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
 //res.render to pass the url data to our template (urls_index)
 app.get("/urls", (req, res) => {
   //when we send even one variable, we need to send it inside an object
