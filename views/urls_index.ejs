@@ -16,6 +16,9 @@
   </header>
   <main style="margin: 1em;">
     <h3>My URLs</h3>
+    <% if (!user) { %>
+      <p>You must be logged in to view your urls.</p>
+    <% } else { %>
     <table class="table">
       <thead>
         <tr>
@@ -29,7 +32,7 @@
         <% for(let url in urls) { %>
           <tr>
             <td><%= url %></td>
-            <td><%= urls[url] %></td>
+            <td><%= urls[url].longURL %></td>
             <td><form method="GET" action="/urls/<%= url %>"><button type="submit" class="btn btn-outline-primary">Edit</button></form></td>
             <td><form method="POST" action="/urls/<%= url %>/delete"><button type="submit" class="btn btn-outline-danger">Delete</button></form></td>
           </tr>
@@ -37,7 +40,7 @@
       </tbody>
     </table>
     <a href="/urls/new"> create a new url </a>
-
+    <% } %>
   </main>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -45,10 +48,3 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 </body>
 </html>
-
-
-<!-- create a condition to select whether or not the string value for key will get printed-->
-<!-- <% if(urls) {%> -->
-  <!-- the <%= %> syntax allows the result of code to show on the page-->
-  <!-- <h1><%= urls %></h1> -->
-<!-- <% }%> -->
