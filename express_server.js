@@ -49,7 +49,8 @@ function emailExists (email) {
 
 function emailMatchesPass (email, password) {
   for (const key in users) {
-    if (users[key].password === password && users[key].email === email) {
+    const hashedPassword = users[key].password;
+    if (bcrypt.compareSync(password, hashedPassword) && users[key].email === email) {
       return true;
     }
   }
