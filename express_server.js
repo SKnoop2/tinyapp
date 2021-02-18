@@ -3,8 +3,12 @@ const app = express();
 const PORT = 8080;
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+// const password = "dishwasher-funk"; // found in the req.params object
+// const hashedPassword = bcrypt.hashSync(password, 10);
+// console.log(bcrypt.hashSync(password, 10))
 
-// console.log(generateRandomString());
+// app.use(bcrypt())
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser())
 
@@ -20,12 +24,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: "$2b$10$SrDVvVdcXWomzpQYU/g6q.zz2ld3FTNn/UXe1bvJz7v7ktPdzK6MS"
   },
   "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: "$2b$10$2N1IAzGm7eNmCyfjFkvPZuqzS2nh6mTVlMWOtZwYbSHXetKttOBCi"
   }
 }
 
@@ -72,6 +76,7 @@ function urlsForUser(id) {
   return urls;
 }
 
+
 // #REGISTER NEW USER
 app.get("/register", (req, res) => {
   const userID = req.cookies.user_id;
@@ -88,16 +93,17 @@ app.post("/register", (req, res) => {
   if (!email || !password) {
     res.status(400).send("400 Email and password fields cannot be empty");
   } 
-  
   if (emailExists(email)) {
     res.status(400).send("400 This email is already registered");
   } else {
     let id = generateRandomString();
-    users[id] = {
+    newUserObj = {
       id,
       email,
-      password
+      password: bcrypt.hashSync(password, 10)
     }
+    // console.log(newUserObj);
+    users[id] = newUserObj
     res.cookie("user_id", id);
     res.redirect("/urls")
   }
