@@ -4,9 +4,7 @@ const PORT = 8080;
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
-// const password = "dishwasher-funk"; // found in the req.params object
-// const hashedPassword = bcrypt.hashSync(password, 10);
-// console.log(bcrypt.hashSync(password, 10))
+
 
 // app.use(bcrypt())
 app.use(bodyParser.urlencoded({extended: true}));
