@@ -40,7 +40,7 @@ function generateRandomString() {
   return str;
 }
 
-function emailExists (email) {
+const emailExists = function (email, users) {
   for (const key in users) {
     if (users[key].email === email) {
       return true;
@@ -96,7 +96,7 @@ app.post("/register", (req, res) => {
   if (!email || !password) {
     res.status(400).send("400 Email and password fields cannot be empty");
   } 
-  if (emailExists(email)) {
+  if (emailExists(email, users)) {
     res.status(400).send("400 This email is already registered");
   } else {
     let id = generateRandomString();
@@ -129,7 +129,7 @@ app.post("/login", (req, res) => {
   if (!email || !password) {
     res.status(400).send("400 Email and password fields cannot be empty");
   }
-  else if (!emailExists(email)) {
+  else if (!emailExists(email, users)) {
     res.status(403).send("403 Email or password are incorrect");
   }
   else if (!emailMatchesPass(email, password)) {
@@ -139,8 +139,6 @@ app.post("/login", (req, res) => {
     const id = findID(email, password);
     //if email exits & password is correct
     req.session.user_id = generateRandomString();
-    // res.cookie("user_id", id);
-    // req.session.user_id
     res.redirect("/urls");  
   } 
 });
