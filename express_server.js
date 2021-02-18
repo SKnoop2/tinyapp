@@ -4,10 +4,6 @@ const PORT = 8080;
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
-function generateRandomString() {
-  const str = Math.random().toString(36).substring(7);
-  return str;
-}
 // console.log(generateRandomString());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser())
@@ -26,12 +22,27 @@ const users = {
     email: "user@example.com", 
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
+  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
     password: "dishwasher-funk"
   }
 }
+
+function generateRandomString() {
+  const str = Math.random().toString(36).substring(7);
+  return str;
+}
+
+function emailExists (email) {
+  for (const key in users) {
+    if (users[key].email === email) {
+      return true;
+    }
+  }
+  return false;
+}
+
 
 //res.render to pass the url data to our template (urls_index)
 app.get("/urls", (req, res) => {
@@ -80,6 +91,14 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
+app.get("/400", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const templateVars = {
+    user: users[userID]
+  };
+  res.render("400", templateVars);
+});
+
 // #SUBMIT URLS
 //pushes form submission data & newly created short url into our database object, then redirects user to shortURL page
 app.post("/urls", (req, res) => {
@@ -125,17 +144,25 @@ app.post("/logout", (req, res) => {
 
 // #REGISTER ENTRY FORM
 app.post("/register", (req, res) => {
-  const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  users[id] = {
-    id,
-    email,
-    password
+  
+  if (!email || !password) {
+    // res.redirect("/400")
+    res.status(400).send("400 Email and password fields cannot be empty");
+  } 
+  if (emailExists(email)) {
+    res.status(400).send("400 This email is already registered");
+  } else {
+    let id = generateRandomString();
+    users[id] = {
+      id,
+      email,
+      password
+    }
+    res.cookie("user_id", id);
+    res.redirect("/urls")
   }
-  res.cookie("user_id", id);
-  console.log(users[id]);
-  res.redirect("/urls")
 });
 
 app.listen(PORT, () => {
