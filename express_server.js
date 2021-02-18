@@ -43,45 +43,23 @@ function emailExists (email) {
   return false;
 }
 
-function passwordCorrect (password) {
+function emailMatchesPass (email, password) {
   for (const key in users) {
-    if (users[key].password === password) {
+    if (users[key].password === password && users[key].email === email) {
       return true;
     }
   }
   return false;
 }
 
-//res.render to pass the url data to our template (urls_index)
-app.get("/urls", (req, res) => {
-  const userID = req.cookies["user_id"];
-  const templateVars = { 
-    user: users[userID],
-    urls: urlDatabase
-  };
-  //express knows to look inside a views directory for template file with extension .ejs, thus we don't need to add a path to file
-  res.render("urls_index", templateVars);
-});
-
-app.get("/urls/new", (req, res) => {
-  const userID = req.cookies["user_id"];
-  const templateVars = { 
-    user: users[userID]
-  };
-  res.render("urls_new", templateVars);
-});
-
-
-//redirects users to longURL
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  const templateVars = {
-    user: req.cookies["username"],
-  };
-  res.redirect(longURL);
-  res.render("urls_show", templateVars);
-});
-
+function findID (email, password) {
+  for (const key in users) {
+    if (users[key].password === password && users[key].email === email) {
+      return key;
+    }
+  }
+  return false;
+}
 
 // #REGISTER NEW USER
 app.get("/register", (req, res) => {
@@ -97,9 +75,9 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   
   if (!email || !password) {
-    // res.redirect("/400")
     res.status(400).send("400 Email and password fields cannot be empty");
   } 
+  
   if (emailExists(email)) {
     res.status(400).send("400 This email is already registered");
   } else {
@@ -124,24 +102,50 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const username = req.body.username;
+  const email = req.body.email;
   const password = req.body.password;
   
   if (!email || !password) {
-    // res.redirect("/400")
     res.status(400).send("400 Email and password fields cannot be empty");
   }
-  if (!passwordCorrect) {
-    res.status(400).send("400 Incorrect password entered");
-  } else {
-    res.cookie("user_id", username);
+  else if (!emailExists(email)) {
+    res.status(403).send("403 This email was not found in our records");
+  }
+  else if (!emailMatchesPass(email, password)) {
+    res.status(403).send("403 Email address match password");
+  } 
+  else {
+    const id = findID(email, password);
+    //if email exits & password is correct
+    res.cookie("user_id", id);
     res.redirect("/urls");  
   } 
 });
 
 
-// #SUBMIT URLS
-//creates a path to a page for newly created shortURL
+// #HOMEPAGE
+app.get("/urls", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const templateVars = { 
+    user: users[userID],
+    urls: urlDatabase
+  };
+  //res.render passes url data to our template (urls_index)
+  //express knows to look inside a views directory for template file with extension .ejs, thus we don't need to add a path to file
+  res.render("urls_index", templateVars);
+});
+
+
+// #NEW URLS
+app.get("/urls/new", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const templateVars = { 
+    user: users[userID]
+  };
+  res.render("urls_new", templateVars);
+});
+
+//creates a page for newly created shortURL
 app.get("/urls/:shortURL", (req, res) => {
   const userID = req.cookies["user_id"];
   const templateVars = { 
@@ -150,7 +154,17 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 })
 
-//pushes form submission data & newly created short url into our database object, then redirects user to shortURL page
+//redirects users to longURL when they click on link in above page
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  const templateVars = {
+    userID: req.cookies["user_id"],
+  };
+  res.redirect(longURL);
+  res.render("urls_show", templateVars);
+});
+
+//pushes form submission data & newly created short url into our database object
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
@@ -192,3 +206,5 @@ app.post("/logout", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
 });
+
+//worked on code with Gavin Swan
