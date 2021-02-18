@@ -43,6 +43,14 @@ function emailExists (email) {
   return false;
 }
 
+function passwordCorrect (password) {
+  for (const key in users) {
+    if (users[key].password === password) {
+      return true;
+    }
+  }
+  return false;
+}
 
 //res.render to pass the url data to our template (urls_index)
 app.get("/urls", (req, res) => {
@@ -63,14 +71,6 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-//creates a path to a page holding all of our short & long URLs
-app.get("/urls/:shortURL", (req, res) => {
-  const userID = req.cookies["user_id"];
-  const templateVars = { 
-    user: users[userID]
-  }
-  res.render("urls_show", templateVars);
-})
 
 //redirects users to longURL
 app.get("/u/:shortURL", (req, res) => {
@@ -82,7 +82,8 @@ app.get("/u/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// #REGISTER (LOGIN)
+
+// #REGISTER NEW USER
 app.get("/register", (req, res) => {
   const userID = req.cookies["user_id"];
   const templateVars = {
@@ -91,58 +92,6 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
-app.get("/400", (req, res) => {
-  const userID = req.cookies["user_id"];
-  const templateVars = {
-    user: users[userID]
-  };
-  res.render("400", templateVars);
-});
-
-// #SUBMIT URLS
-//pushes form submission data & newly created short url into our database object, then redirects user to shortURL page
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  const longURL = req.body.longURL;
-  //creates new key/value pair
-  urlDatabase[shortURL] = longURL;
-  res.redirect(`/urls/${shortURL}`);
-});
-
-// #DELETE URLS
-//handle a delete request via POST method
-app.post("/urls/:shortURL/delete", (req, res) => {
-  //js delete operator removes property (longURL) from object
-  delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls");
-});
-
-// #UPDATE URLS
-app.post("/urls/:shortURL", (req, res) => {
-  //shortURL stays the same, so we obtain it from the params key in object
-  const shortURL = req.params.shortURL;
-  //longURL is a new one, so we obtain it from the body key in our object
-  const longURL = req.body.longURL;
-  //creates new key/value pair
-  urlDatabase[shortURL] = longURL;
-  res.redirect(`/urls/${shortURL}`);
-});
-
-// #USERNAME ENTRY
-app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username);
-  res.redirect("/urls");  
-});
-
-// #LOGOUT
-app.post("/logout", (req, res) => {
-  // don't need second variable in res.clearCookie because we don't need username to show on page
-  res.clearCookie("user_id");
-  res.redirect("/urls");  
-});
-
-// #REGISTER ENTRY FORM
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -164,6 +113,81 @@ app.post("/register", (req, res) => {
     res.redirect("/urls")
   }
 });
+
+// #LOGIN
+app.get("/login", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const templateVars = {
+    user: users[userID]
+  };
+  res.render("login", templateVars);
+});
+
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+  
+  if (!email || !password) {
+    // res.redirect("/400")
+    res.status(400).send("400 Email and password fields cannot be empty");
+  }
+  if (!passwordCorrect) {
+    res.status(400).send("400 Incorrect password entered");
+  } else {
+    res.cookie("user_id", username);
+    res.redirect("/urls");  
+  } 
+});
+
+
+// #SUBMIT URLS
+//creates a path to a page for newly created shortURL
+app.get("/urls/:shortURL", (req, res) => {
+  const userID = req.cookies["user_id"];
+  const templateVars = { 
+    user: users[userID]
+  }
+  res.render("urls_show", templateVars);
+})
+
+//pushes form submission data & newly created short url into our database object, then redirects user to shortURL page
+app.post("/urls", (req, res) => {
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  //creates new key/value pair
+  urlDatabase[shortURL] = longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
+
+// #UPDATE URLS
+app.post("/urls/:shortURL", (req, res) => {
+  //shortURL stays the same, so we obtain it from the params key in object
+  const shortURL = req.params.shortURL;
+  //longURL is a new one, so we obtain it from the body key in our object
+  const longURL = req.body.longURL;
+  //creates new key/value pair
+  urlDatabase[shortURL] = longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
+
+// #DELETE URLS
+//handle a delete request via POST method
+app.post("/urls/:shortURL/delete", (req, res) => {
+  //js delete operator removes property (longURL) from object
+  delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+});
+
+
+// #LOGOUT
+app.post("/logout", (req, res) => {
+  // don't need second variable in res.clearCookie because we don't need username to show on page
+  res.clearCookie("user_id");
+  res.redirect("/urls");  
+});
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
