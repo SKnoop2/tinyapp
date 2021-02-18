@@ -61,7 +61,7 @@ function findID (email, password) {
   return false;
 }
 
-//comparing the userID with the logged-in user's ID
+//compare the userID from database with the logged-in user's ID, then only show the URLS if matched
 function urlsForUser(id) {
   let urls = {}
   for (const key in urlDatabase) {
@@ -208,19 +208,27 @@ app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   //longURL is a new one, so we obtain it from the body key in our object
   const longURL = req.body.longURL;
-  //creates new key/value pair
   const userID = req.cookies.user_id;
+  if (!userID) {
+    res.status(401).send("401 Must be logged in");
+  } else {
+  //create new key/value pair
   urlDatabase[shortURL] = {longURL: longURL, userID: userID };
   res.redirect(`/urls/${shortURL}`);
+  }
 });
 
 
 // #DELETE URLS
-//handle a delete request via POST method
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const userID = req.cookies.user_id;
+  if (!userID) {
+    res.status(401).send("401 Must be logged in");
+  } else {
   //js delete operator removes property (longURL) from object
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
+  }
 });
 
 
