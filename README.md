@@ -7,8 +7,9 @@ This project was made during week 3 of coding bootcamp with Lighthouse Labs
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["Simple Login Page"](https://github.com/SilkyCin/tinyapp/blob/master/docs/Registration%20Page.png?raw=true)
+!["User' Master URLs List"](https://github.com/SilkyCin/tinyapp/blob/master/docs/My%20URLs%20Page.png?raw=true)
+!["Edit URLS"](https://github.com/SilkyCin/tinyapp/blob/master/docs/Short%20URLs%20Page.png?raw=true)
 
 ## Dependencies
 
