@@ -106,6 +106,17 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// redirect away from "/"
+app.get("/", (req, res) => {
+  const userID = req.session.user_id;
+  
+  if (userID) {
+    res.redirect("/urls");
+    return;
+  } 
+  res.redirect("/login");
+});
+
 
 // #CREATE NEW URLS
 app.get("/urls/new", (req, res) => {
@@ -140,7 +151,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session.user_id;
   const templateVars = { 
     user: users[userID],
-    longURL: req.params.longURL,
+    longURL: urlDatabase[req.params.shortURL].longURL,
     shortURL: req.params.shortURL
   }
   res.render("urls_show", templateVars);
@@ -180,10 +191,13 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   const userID = req.session.user_id;
   if (!userID) {
     res.status(401).send("401 Must be logged in");
-  } if (Object.keys(showUserUrls(userID, urlDatabase)).includes(req.params.shortURL)) {
-      delete urlDatabase[req.params.shortURL];
+    return;
+  } 
+  if (Object.keys(showUserUrls(userID, urlDatabase)).includes(req.params.shortURL)) {
+    delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
-  } else {
+    return;
+  } else if (Object.keys(showUserUrls(userID, urlDatabase)).includes(req.params.shortURL)){
     res.status(403).send("403 This url does not belong to you");
   }
 });
