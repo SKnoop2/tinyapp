@@ -47,12 +47,14 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  // neither email nor password exit in database
+  //if neither email nor password exit in database return error
   if (!email || !password) {
-    res.status(400).send("400 Email and password fields cannot be empty");
+    return res.status(400).send("400 Email and password fields cannot be empty");
   } 
+  //if email already exists in the database return error
   if (emailExists(email, users)) {
-    res.status(400).send("400 This email is already registered");
+    return res.status(400).send("400 This email is already registered");
+  //Add new user to database
   } else {
     let id = generateRandomString();
     newUserObj = {
@@ -137,11 +139,18 @@ app.get("/urls/new", (req, res) => {
 //pushes form submission data & newly created short url into our database object
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = {
-    longURL : req.body.longURL, 
-    userID: req.session.user_id
-  };
-  res.redirect(`/urls/${shortURL}`);
+  const userID = req.session.user_id;
+  if (!userID) {
+    return res.status(401).send("Must be logged in to create new url");
+  } 
+  //if logged in & own URL:
+    else {
+    urlDatabase[shortURL] = {
+      longURL : req.body.longURL, 
+      userID: req.session.user_id
+    };
+    res.redirect(`/urls/${shortURL}`);
+  } 
 });
 
 
