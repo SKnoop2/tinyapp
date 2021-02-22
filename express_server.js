@@ -80,7 +80,7 @@ app.post("/login", (req, res) => {
   const password = req.body.password;
   
   if (!email || !password) {
-    res.status(400).send("400 Email and password fields cannot be empty");
+    return res.status(400).send("400 Email and password fields cannot be empty");
   }
   if (!emailExists(email, users) || !emailMatchesPass(email, password, users)) {
     res.status(403).send("403 Email or password are incorrect");
@@ -149,22 +149,38 @@ app.post("/urls", (req, res) => {
 //creates a page for newly created shortURL
 app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session.user_id;
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   const templateVars = { 
     user: users[userID],
     longURL: urlDatabase[req.params.shortURL].longURL,
     shortURL: req.params.shortURL
   }
-  res.render("urls_show", templateVars);
+  //if not logged in:
+  if (!userID) {
+    return res.status(401).send("Must be logged in to view this resource");
+  } 
+  //if logged in & own URL:
+  if (Object.keys(showUserUrls(userID, urlDatabase)).includes(req.params.shortURL)) {
+    urlDatabase[shortURL] = {longURL: longURL, userID: userID };
+    res.render("urls_show", templateVars);
+    // return;
+  } 
+  //if logged but don't own URL
+  else {
+    return res.status(403).send("This page does not belong to you");
+  }
 })
 
 //redirects users to longURL when they click on link in above page
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
-  const templateVars = {
-    userID: req.session.user_id,
-  };
+  //DO WE NEED TO DELETE OR KEEP THIS SECTION??
+  // const templateVars = {
+  //   userID: req.session.user_id,
+  // };
   res.redirect(longURL);
-  res.render("urls_show", templateVars);
+  // res.render("urls_show", templateVars);
 });
 
 
