@@ -1,74 +1,64 @@
+// Run server: npm start
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session')
+
+
+// Middleware
 const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
-const { emailExists, generateRandomString, emailMatchesPass, findUserID, showUserUrls } = require('./helpers')
-
-
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: "superDuperCoolCookies",
   keys: ["key1", "key2"]
 }));
 
-//tells express to use EJS as its templating engine
-app.set("view engine", "ejs");
-
-const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "aJ481W" },
-  "9sn5xK": { longURL: "http://www.google.com", userID: "aJ481W" }
-};
-
-const users = { 
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "$2b$10$SrDVvVdcXWomzpQYU/g6q.zz2ld3FTNn/UXe1bvJz7v7ktPdzK6MS"
-  },
-  "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "$2b$10$2N1IAzGm7eNmCyfjFkvPZuqzS2nh6mTVlMWOtZwYbSHXetKttOBCi"
-  }
-}
+app.set("view engine", "ejs"); //tells express to use EJS as its templating engine
 
 
-// #REGISTER NEW USER
+// Helper functions
+const { emailExists, generateRandomString, emailMatchesPass, findUserID, showUserUrls } = require('./helpers')
+
+
+// Global Variables
+const urlDatabase = {};
+const users = {}
+
+
+// ### REGISTER NEW USERS ###
 app.get("/register", (req, res) => {
   const userID = req.session.user_id;
   const templateVars = {
     user: users[userID]
   };
-  res.render("register", templateVars);
+  res.render("register", templateVars); //express doesn't require directory path to ejs pages when stored in views folder
 });
 
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  //if neither email nor password exit in database return error
-  if (!email || !password) {
+  
+  if (!email || !password) { //return error when no email or password entered
     return res.status(400).send("400 Email and password fields cannot be empty");
   } 
-  //if email already exists in the database return error
-  if (emailExists(email, users)) {
+  if (emailExists(email, users)) { //return error when registering with email that already exists in database
     return res.status(400).send("400 This email is already registered");
-  //Add new user to database
-  } else {
-    let id = generateRandomString();
+  } else { //when new account successfully started:
+    let id = generateRandomString(); //create new user object 
     newUserObj = {
       id,
       email,
       password: bcrypt.hashSync(password, 10)
     }
-    users[id] = newUserObj;
+    users[id] = newUserObj; // add new user to database & redirect to URLs page
     req.session.user_id = id;
     res.redirect("/urls")
   }
 });
 
-// #LOGIN
+
+// ### LOGIN ###
 app.get("/login", (req, res) => {
   const userID = req.session.user_id;
   const templateVars = {
@@ -80,22 +70,22 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  
-  if (!email || !password) {
+  const id = findUserID(email, password, users);
+
+  if (!email || !password) {//show error message when no email or password entered
     return res.status(400).send("400 Email and password fields cannot be empty");
   }
-  if (!emailExists(email, users) || !emailMatchesPass(email, password, users)) {
+  if (!emailExists(email, users) || !emailMatchesPass(email, password, users)) {//show error message when email or password are entered incorrectly
     res.status(403).send("403 Email or password are incorrect");
-    //if email exits & password is correct
-  } else {
-    const id = findUserID(email, password, users);
+  } else { //redirect user to urls page when both email & password match that in user database
     req.session.user_id = id;
     res.redirect("/urls");  
   } 
 });
 
 
-// #HOMEPAGE
+// ### HOMEPAGE ### 
+// Shows all urls created by user
 app.get("/urls", (req, res) => {
   const userID = req.session.user_id;
   const data = showUserUrls(userID, urlDatabase);
@@ -103,12 +93,10 @@ app.get("/urls", (req, res) => {
       user: users[userID],
       urls: data
   }
-  //res.render passes url data to our template (urls_index)
-  //express knows to look inside a views directory for template file with extension .ejs, thus we don't need to add a path to file
   res.render("urls_index", templateVars);
 });
 
-// redirect away from "/"
+// redirect away from "/" to home or login page
 app.get("/", (req, res) => {
   const userID = req.session.user_id;
   
@@ -120,7 +108,7 @@ app.get("/", (req, res) => {
 });
 
 
-// #CREATE NEW URLS
+// ### CREATE NEW URLS ###
 app.get("/urls/new", (req, res) => {
   const userID = req.session.user_id;
 
@@ -136,102 +124,92 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-//pushes form submission data & newly created short url into our database object
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
   const userID = req.session.user_id;
-  if (!userID) {
+
+  if (!userID) { // return error when not logged in
     return res.status(401).send("Must be logged in to create new url");
-  } 
-  //if logged in & own URL:
-    else {
+  } else { // create new URL database object when logged in
     urlDatabase[shortURL] = {
-      longURL : req.body.longURL, 
-      userID: req.session.user_id
+      longURL, 
+      userID
     };
     res.redirect(`/urls/${shortURL}`);
   } 
 });
 
 
-// #TINY URLS INDIVIDUAL PAGES
-//creates a page for newly created shortURL
+// ### RENDER PAGES FOR SHORTENED URLS ###
 app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session.user_id;
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[req.params.shortURL].longURL;
   const templateVars = { 
+    longURL,
+    shortURL,
     user: users[userID],
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    shortURL: req.params.shortURL
   }
-  //if not logged in:
-  if (!userID) {
+
+  if (Object.keys(showUserUrls(userID, urlDatabase)).includes(shortURL)) { //render page when logged into correct account
+    urlDatabase[shortURL] = { longURL, userID };
+    res.render("urls_show", templateVars);
+    return;
+  } 
+  if (!userID) { // return error when not logged in
     return res.status(401).send("Must be logged in to view this resource");
   } 
-  //if logged in & own URL:
-  if (Object.keys(showUserUrls(userID, urlDatabase)).includes(req.params.shortURL)) {
-    urlDatabase[shortURL] = {longURL: longURL, userID: userID };
-    res.render("urls_show", templateVars);
-    // return;
-  } 
-  //if logged but don't own URL
-  else {
-    return res.status(403).send("This page does not belong to you");
+  else { // return error when trying to view URL page belonging to another user
+    res.status(403).send("This page does not belong to you");
   }
 })
 
-//redirects users to longURL when they click on link in above page
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
-  //DO WE NEED TO DELETE OR KEEP THIS SECTION??
-  // const templateVars = {
-  //   userID: req.session.user_id,
-  // };
-  res.redirect(longURL);
-  // res.render("urls_show", templateVars);
+  res.redirect(longURL); // this page will redirect any user to long url, even if not logged in
 });
 
 
-// #UPDATE URL PAGES
+// ### UPDATE SHORTENED URL PAGES ###
 app.post("/urls/:shortURL", (req, res) => {
-  //shortURL stays the same: obtain it from the params key
-  const shortURL = req.params.shortURL;
-  //longURL is entered by user: obtain it from the body key
-  const longURL = req.body.longURL;
+  const shortURL = req.params.shortURL; 
+  const longURL = req.body.longURL; 
   const userID = req.session.user_id;
-  if (!userID) {
-    res.status(401).send("401 Must be logged in");
-  } if (Object.keys(showUserUrls(userID, urlDatabase)).includes(req.params.shortURL)) {
-    urlDatabase[shortURL] = {longURL: longURL, userID: userID };
+
+  if (Object.keys(showUserUrls(userID, urlDatabase)).includes(req.params.shortURL)) { //redirect user to their homepage when new short URL created
+    urlDatabase[shortURL] = { longURL, userID };
     res.redirect("/urls");
-  } else {
-    res.status(403).send("403 This url does not belong to you");
+    return;
+  } 
+  if (!userID) {// return error when not logged in
+    return res.status(401).send("Must be logged in");
+  } else { // return error when trying to view URL page belonging to another user
+    res.status(403).send("This url does not belong to you");
   }
 });
 
 
-// #DELETE URL PAGES
+// ### DELETE SHORTENED URL PAGES ###
 app.post("/urls/:shortURL/delete", (req, res) => {
   const userID = req.session.user_id;
-  if (!userID) {
-    res.status(401).send("401 Must be logged in");
-    return;
-  } 
+
   if (Object.keys(showUserUrls(userID, urlDatabase)).includes(req.params.shortURL)) {
     delete urlDatabase[req.params.shortURL];
     res.redirect("/urls");
     return;
-  } else if (Object.keys(showUserUrls(userID, urlDatabase)).includes(req.params.shortURL)){
-    res.status(403).send("403 This url does not belong to you");
+  } 
+  if (!userID) { // return error when not logged in
+    return res.status(401).send("Must be logged in");
+  } else { // return error when trying to view URL page belonging to another user
+    res.status(403).send("This url does not belong to you");
   }
 });
 
 
-// #LOGOUT
+// ### LOGOUT ###
 app.post("/logout", (req, res) => {
-  // cookie is cleared upon logout
-  req.session = null;
+  req.session = null;// cookie is cleared upon logout
   res.redirect("/urls");  
 });
 
@@ -240,4 +218,4 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
 });
 
-//worked on code with Gavin Swan
+//Pair coded with Gavin Swan

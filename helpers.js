@@ -2,8 +2,7 @@ const bcrypt = require('bcrypt');
 
 
 const generateRandomString = function() {
-  const str = Math.random().toString(36).substring(7);
-  return str;
+  return Math.random().toString(36).substring(7);
 }
 
 // check whether a given email matches one in a database
